@@ -46,12 +46,14 @@ clock_t sort_time = end_time - start_time;
     return (double) sort_time / CLOCKS_PER_SEC;
 }
 
+
 void outputArray_(const int *const a, const size_t n) {
     for (size_t i = 0; i < n; i++)
         printf("%d ", a[i]);
 
     printf("\n");
 }
+
 
 void checkTime(void(*sortFunc)(int *, size_t),
                void (*generateFunc)(int *, size_t),
@@ -98,11 +100,13 @@ bool isOrdered(int pInt[100000], size_t size) {
     return 0;
 }
 
+
 void swap(int a, int b) {
     int t = a;
     a = b;
     b = t;
 }
+
 
 static void selectionSort(int *unsortedPart, size_t nUnsorted) {
     if (nUnsorted == 1) // массив из одного элемента является
@@ -122,6 +126,7 @@ static int getMinIndex(int *pInt, size_t unsorted) {
     return 0;
 }
 
+
 void insertionSort(int *a, const size_t size) {
     for (size_t i = 1; i < size; i++) {
         int t = a[i];
@@ -136,49 +141,6 @@ void insertionSort(int *a, const size_t size) {
     }
 }
 
-void timeExperiment() {
-// описание функций сортировки
-    SortFunc sorts[] = {
-            {selectionSort, "selectionSort"},
-            {insertionSort, "insertionSort"},
-// вы добавите свои сортировки
-    };
-    const unsigned FUNCS_N = ARRAY_SIZE(sorts);
-// описание функций генерации
-    void (*generateRandomArray)(int *, size_t) = 0;
-    GeneratingFunc generatingFuncs[] = {
-// генерируется случайный массив
-            {generateRandomArray,      "random"},
-// генерируется массив 0, 1, 2, ..., n - 1
-            {generateRandomArray,      "ordered"},
-// генерируется массив n - 1, n - 2, ..., 0
-            {generateOrderedBackwards, "orderedBackwards"}
-    };
-
-    const unsigned CASES_N = ARRAY_SIZE(generatingFuncs);
-
-// запись статистики в файл
-    for (size_t size = 10000; size <= 100000; size += 10000) {
-        printf("------------------------------\n");
-        printf("Size: %zu\n", size);
-
-        for (int i = 0; i < FUNCS_N; i++) {
-
-            for (int j = 0; j < CASES_N; j++) {
-// генерация имени файла
-                static char filename[128];
-                sprintf(filename, "%s_%s_time",
-                        sorts[i].name, generatingFuncs[j].name);
-                checkTime(sorts[i].sort,
-
-                          generatingFuncs[j].generate,
-                          size, filename);
-            }
-        }
-
-        printf("\n");
-    }
-}
 
 long long getBubbleSort(int *a, size_t n) {
     long long nComps = 0;
@@ -202,6 +164,7 @@ long long getBubbleSort(int *a, size_t n) {
     return nComps;
 }
 
+
 long long getChoiceSort(int *a, size_t n) {
     long long nComps = 0;
     int tmp = 0;
@@ -220,6 +183,7 @@ long long getChoiceSort(int *a, size_t n) {
     }
 }
 
+
 void getInsertionSort(int *a, size_t n) {
     int newElement, location;
 
@@ -234,6 +198,7 @@ void getInsertionSort(int *a, size_t n) {
         a[location + 1] = newElement;
     }
 }
+
 
 void getCombSort(int *a, size_t n) {
     if (a && n) {
@@ -279,6 +244,7 @@ void ShellSort(int *a, size_t n) {
 typedef unsigned uint;
 #define each(i, x) for (i = 0; i < x; i++)
 
+
 static void radSortU(uint *from, uint *to, uint bit) {
     if (!bit || to < from + 1) return;
 
@@ -297,6 +263,7 @@ static void radSortU(uint *from, uint *to, uint bit) {
     radSortU(ll, to, bit);
 }
 
+
 static void getRadixSort(int *a, const size_t n) {
     size_t i;
     uint *x = (uint *) a;
@@ -312,7 +279,273 @@ static inline void getRadixSortUnsigned(uint *a, const size_t n) {
     radSortU(a, a + n, (uint) INT_MIN);
 }
 
+
+void checkTimeBubble(void(*sortFunc)(int *, size_t),
+                     void (*generateFunc)(int *, size_t),
+                     size_t size, char *experimentName) {
+
+    static size_t runCounter = 1;
+    static int innerBuffer[100000];
+    generateFunc(innerBuffer, size);
+
+    printf("Run #%zu| ", runCounter++);
+    printf("Name: %s\n", experimentName);
+
+    // замер времени
+    double time;
+    TIME_TEST({
+                  getBubbleSort(innerBuffer, size);
+              }, time);
+
+    printf("Status: ");
+
+    if (isOrdered(innerBuffer, size)) {
+        printf("OK! Time: %.3f s.\n", time);
+        char filename[256];
+        sprintf(filename, "./data/%s.csv", experimentName);
+        FILE *f = fopen(filename, "a");
+        if (f == NULL) {
+            printf("FileOpenError %s", filename);
+            exit(1);
+        }
+        fprintf(f, "%zu; %.3f\n", size, time);
+        fclose(f);
+    } else {
+        printf("Wrong!\n");
+
+        outputArray_(innerBuffer, size);
+        exit(1);
+    }
+}
+
+
+void checkTimeChoice(void(*sortFunc)(int *, size_t),
+                     void (*generateFunc)(int *, size_t),
+                     size_t size, char *experimentName) {
+
+    static size_t runCounter = 1;
+    static int innerBuffer[100000];
+    generateFunc(innerBuffer, size);
+
+    printf("Run #%zu| ", runCounter++);
+    printf("Name: %s\n", experimentName);
+
+    // замер времени
+    double time;
+    TIME_TEST({
+                  getChoiceSort(innerBuffer, size);
+              }, time);
+
+    printf("Status: ");
+
+    if (isOrdered(innerBuffer, size)) {
+        printf("OK! Time: %.3f s.\n", time);
+        char filename[256];
+        sprintf(filename, "./data/%s.csv", experimentName);
+        FILE *f = fopen(filename, "a");
+        if (f == NULL) {
+            printf("FileOpenError %s", filename);
+            exit(1);
+        }
+        fprintf(f, "%zu; %.3f\n", size, time);
+        fclose(f);
+    } else {
+        printf("Wrong!\n");
+
+        outputArray_(innerBuffer, size);
+        exit(1);
+    }
+}
+
+
+void checkTimeInsertion(void(*sortFunc)(int *, size_t),
+                        void (*generateFunc)(int *, size_t),
+                        size_t size, char *experimentName) {
+
+    static size_t runCounter = 1;
+    static int innerBuffer[100000];
+    generateFunc(innerBuffer, size);
+
+    printf("Run #%zu| ", runCounter++);
+    printf("Name: %s\n", experimentName);
+
+    // замер времени
+    double time;
+    TIME_TEST({
+                  getInsertionSort(innerBuffer, size);
+              }, time);
+
+    printf("Status: ");
+
+    if (isOrdered(innerBuffer, size)) {
+        printf("OK! Time: %.3f s.\n", time);
+        char filename[256];
+        sprintf(filename, "./data/%s.csv", experimentName);
+        FILE *f = fopen(filename, "a");
+        if (f == NULL) {
+            printf("FileOpenError %s", filename);
+            exit(1);
+        }
+        fprintf(f, "%zu; %.3f\n", size, time);
+        fclose(f);
+    } else {
+        printf("Wrong!\n");
+
+        outputArray_(innerBuffer, size);
+        exit(1);
+    }
+}
+
+
+void checkTimeComb(void(*sortFunc)(int *, size_t),
+                   void (*generateFunc)(int *, size_t),
+                   size_t size, char *experimentName) {
+
+    static size_t runCounter = 1;
+    static int innerBuffer[100000];
+    generateFunc(innerBuffer, size);
+
+    printf("Run #%zu| ", runCounter++);
+    printf("Name: %s\n", experimentName);
+
+    // замер времени
+    double time;
+    TIME_TEST({
+                  getCombSort(innerBuffer, size);
+              }, time);
+
+    printf("Status: ");
+
+    if (isOrdered(innerBuffer, size)) {
+        printf("OK! Time: %.3f s.\n", time);
+        char filename[256];
+        sprintf(filename, "./data/%s.csv", experimentName);
+        FILE *f = fopen(filename, "a");
+        if (f == NULL) {
+            printf("FileOpenError %s", filename);
+            exit(1);
+        }
+        fprintf(f, "%zu; %.3f\n", size, time);
+        fclose(f);
+    } else {
+        printf("Wrong!\n");
+
+        outputArray_(innerBuffer, size);
+        exit(1);
+    }
+}
+
+
+void checkTimeShell(void(*sortFunc)(int *, size_t),
+                    void (*generateFunc)(int *, size_t),
+                    size_t size, char *experimentName) {
+
+    static size_t runCounter = 1;
+    static int innerBuffer[100000];
+    generateFunc(innerBuffer, size);
+
+    printf("Run #%zu| ", runCounter++);
+    printf("Name: %s\n", experimentName);
+
+    // замер времени
+    double time;
+    TIME_TEST({
+                  ShellSort(innerBuffer, size);
+              }, time);
+
+    printf("Status: ");
+
+    if (isOrdered(innerBuffer, size)) {
+        printf("OK! Time: %.3f s.\n", time);
+        char filename[256];
+        sprintf(filename, "./data/%s.csv", experimentName);
+        FILE *f = fopen(filename, "a");
+        if (f == NULL) {
+            printf("FileOpenError %s", filename);
+            exit(1);
+        }
+        fprintf(f, "%zu; %.3f\n", size, time);
+        fclose(f);
+    } else {
+        printf("Wrong!\n");
+
+        outputArray_(innerBuffer, size);
+        exit(1);
+    }
+}
+
+
+void timeExperiment() {
+// описание функций сортировки
+    SortFunc sorts[] = {
+            {selectionSort, "selectionSort"},
+            {insertionSort, "insertionSort"},
+// вы добавите свои сортировки
+    };
+    const unsigned FUNCS_N = ARRAY_SIZE(sorts);
+// описание функций генерации
+    void (*generateRandomArray)(int *, size_t) = 0;
+    GeneratingFunc generatingFuncs[] = {
+// генерируется случайный массив
+            {generateRandomArray,      "random"},
+// генерируется массив 0, 1, 2, ..., n - 1
+            {generateRandomArray,      "ordered"},
+// генерируется массив n - 1, n - 2, ..., 0
+            {generateOrderedBackwards, "orderedBackwards"}
+    };
+
+    const unsigned CASES_N = ARRAY_SIZE(generatingFuncs);
+
+// запись статистики в файл
+    for (size_t size = 10000; size <= 100000; size += 10000) {
+        printf("------------------------------\n");
+        printf("Size: %zu\n", size);
+
+        for (int i = 0; i < FUNCS_N; i++) {
+
+            for (int j = 0; j < CASES_N; j++) {
+// генерация имени файла
+                static char filename[128];
+                sprintf(filename, "%s_%s_time",
+                        sorts[i].name, generatingFuncs[j].name);
+                checkTime(sorts[i].sort,
+
+                          generatingFuncs[j].generate,
+                          size, filename);
+
+                checkTimeBubble(sorts[i].sort,
+
+                                generatingFuncs[j].generate,
+                                size, filename);
+
+                checkTimeChoice(sorts[i].sort,
+
+                                generatingFuncs[j].generate,
+                                size, filename);
+
+                checkTimeComb(sorts[i].sort,
+
+                              generatingFuncs[j].generate,
+                              size, filename);
+
+                checkTimeInsertion(sorts[i].sort,
+
+                                   generatingFuncs[j].generate,
+                                   size, filename);
+
+                checkTimeShell(sorts[i].sort,
+
+                               generatingFuncs[j].generate,
+                               size, filename);
+            }
+        }
+
+        printf("\n");
+    }
+}
+
 int main() {
     timeExperiment();
+
     return 0;
 }
