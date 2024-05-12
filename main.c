@@ -475,12 +475,31 @@ void checkTimeShell(void(*sortFunc)(int *, size_t),
 }
 
 
+
+long long getSelectionSortNComp(int *a, size_t n) {
+    long long nComps = 0;
+    for (int i = 0; ++nComps && i < n; i++) {
+        int min = a[i];
+        int minIndex = i;
+        for (int j = i + 1; ++nComps && j < n; j++)
+            if (++nComps && a[j] < min) {
+                min = a[j];
+                minIndex = j;
+            }
+        if (++nComps && i != minIndex)
+            swap(   a[i], a[minIndex]);
+    }
+    return nComps;
+}
+
+
+
+
 void timeExperiment() {
 // описание функций сортировки
     SortFunc sorts[] = {
             {selectionSort, "selectionSort"},
-            {insertionSort, "insertionSort"},
-// вы добавите свои сортировки
+            {getRadixSort, "getRadixSort"},
     };
     const unsigned FUNCS_N = ARRAY_SIZE(sorts);
 // описание функций генерации
@@ -543,24 +562,6 @@ void timeExperiment() {
         printf("\n");
     }
 }
-
-
-long long getSelectionSortNComp(int *a, size_t n) {
-    long long nComps = 0;
-    for (int i = 0; ++nComps && i < n; i++) {
-        int min = a[i];
-        int minIndex = i;
-        for (int j = i + 1; ++nComps && j < n; j++)
-            if (++nComps && a[j] < min) {
-                min = a[j];
-                minIndex = j;
-            }
-        if (++nComps && i != minIndex)
-            swap(   a[i], a[minIndex]);
-    }
-    return nComps;
-}
-
 int main() {
     timeExperiment();
 
